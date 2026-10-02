@@ -1,0 +1,29 @@
+{
+  "name": "trustcue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A simulated Alexa+ experience that detects rising scam risk in conversation and shifts from clarification to protective assistance.",
+  "scripts": {
+    "repl": "node scripts/repl.js",
+    "scenario": "node scripts/run-scenario.js",
+    "test": "node --test test/*.test.js",
+    "dev": "node src/server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1129.0",
+    "@aws-sdk/client-polly": "^3.1131.0"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "alexa",
+    "scam-detection",
+    "amazon-bedrock",
+    "amazon-nova",
+    "amazon-polly",
+    "voice-assistant"
+  ]
+}

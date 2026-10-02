@@ -1,0 +1,14 @@
+{
+  "name": "control",
+  "description": "A completely ordinary evening. TrustCue must stay in normal mode the whole way through — no clarifying questions, no caution, no signals.",
+  "expect": { "finalMode": "normal", "maxMode": "normal", "maxScore": 0 },
+  "turns": [
+    "Good morning. What's the weather looking like today?",
+    "Set a timer for twenty minutes, I've got bread in the oven.",
+    "Remind me to call my daughter this evening, she's been waiting on me.",
+    "Oh, and I need to pay the electricity bill before Friday. Can you remind me Thursday morning?",
+    "My grandson's coming round at the weekend — add ice cream to the shopping list.",
+    "What was that jazz station I was listening to last night?",
+    "Thanks. Play that one."
+  ]
+}

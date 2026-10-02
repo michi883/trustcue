@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrustCue</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-mode="normal">
+
+<main id="stage">
+  <header class="bar">
+    <div class="brand">TrustCue<span class="sub">simulated Alexa+</span></div>
+    <div class="bar-right">
+      <span id="modelTag" class="tag"></span>
+      <button id="judgeToggle" class="ghost" aria-pressed="false">Judge view</button>
+    </div>
+  </header>
+
+  <p id="voiceError" class="voice-error" role="alert" hidden></p>
+
+  <section id="orbWrap">
+    <div id="orb" data-state="idle"><span class="ring"></span><span class="core"></span></div>
+    <p id="hint">Tap the mic, or just type.</p>
+  </section>
+
+  <section id="transcript" aria-live="polite"></section>
+
+  <footer class="composer">
+    <button id="mic" class="mic" title="Hold to speak" aria-label="Speak">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12Z"/></svg>
+    </button>
+    <input id="input" type="text" placeholder="Say something to TrustCue…" autocomplete="off">
+    <button id="send" class="send">Send</button>
+  </footer>
+</main>
+
+<aside id="judge" hidden>
+  <div class="judge-head">
+    <h2>What the user can't see</h2>
+    <button id="judgeClose" class="ghost small">Close</button>
+  </div>
+
+  <div class="panel">
+    <div class="mode-row">
+      <span class="label">Mode</span>
+      <span id="modeChip" class="chip">normal</span>
+    </div>
+    <div class="meter">
+      <div class="meter-track">
+        <div id="meterFill" class="meter-fill"></div>
+        <span class="tick" id="tickCurious"><i></i><b>curious</b></span>
+        <span class="tick" id="tickProtective"><i></i><b>protective</b></span>
+      </div>
+      <div class="meter-foot"><span id="scoreText">score 0</span><span id="triggerText"></span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Accumulated signals</h3>
+    <ul id="signalList" class="signals"><li class="empty">none yet</li></ul>
+  </div>
+
+  <div class="panel">
+    <h3>Turn log</h3>
+    <ol id="turnLog" class="log"><li class="empty">no turns yet</li></ol>
+  </div>
+
+  <div class="panel">
+    <h3>Demo replay</h3>
+    <div class="demo">
+      <select id="demoScenario" aria-label="Scenario to replay"></select>
+      <div class="demo-row">
+        <button id="demoRun">Run demo</button>
+        <button id="demoStop" disabled>Stop</button>
+      </div>
+      <p id="demoStatus" class="demo-status" aria-live="polite">loading…</p>
+    </div>
+    <button id="reset" class="ghost wide">Reset session</button>
+  </div>
+</aside>
+
+<script src="/app.js"></script>
+</body>
+</html>

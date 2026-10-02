@@ -1,0 +1,17 @@
+{
+  "name": "tools-and-practice",
+  "description": "Reaches protective, then the user asks how it works (explain_scam_pattern) and accepts a practice call. Covers both tools and the role-play exit.",
+  "expect": {
+    "finalMode": "protective",
+    "protectiveByTurn": 5
+  },
+  "turns": [
+    "Add batteries to the shopping list.",
+    "A chap rang saying he was from my bank's fraud team.",
+    "He says I have to move my savings into a safe account tonight.",
+    "He keeps saying it has to be done before the bank shuts.",
+    "How does this work, then?",
+    "Yes, go on then, let's practise.",
+    "No, I'm not giving you anything. I'm putting the phone down."
+  ]
+}
