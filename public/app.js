@@ -76,15 +76,19 @@ function stopSpeaking() {
 // is known a backstop sized to that length guarantees the turn ends.
 const LOAD_TIMEOUT_MS = 5000;
 
-function playAudio(src, state = 'speaking') {
+// `onProgress` is handed how far through the clip playback is (0–1), once per
+// frame while sound is actually playing, so the screen can follow the voice.
+function playAudio(src, state = 'speaking', { onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const audio = new Audio();
     audio.preload = 'auto';
     let settled = false;
     let timer = null;
+    let frame = 0;
     const release = () => {
       settled = true;               // set first, so our own pause() is ignored below
       clearTimeout(timer);
+      cancelAnimationFrame(frame);
       if (current?.audio === audio) current = null;
       audio.pause();
       URL.revokeObjectURL(src);
@@ -100,6 +104,18 @@ function playAudio(src, state = 'speaking') {
       timer = setTimeout(finish, length * 1000 + 3000);
     };
     audio.onplay = () => setOrb(state, '');
+    audio.onplaying = () => {       // sound has really started (also after a stall)
+      if (!onProgress) return;
+      cancelAnimationFrame(frame);
+      const tick = () => {
+        if (settled) return;
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          onProgress(Math.min(1, audio.currentTime / audio.duration));
+        }
+        frame = requestAnimationFrame(tick);
+      };
+      tick();
+    };
     audio.onended = finish;
     audio.onpause = finish;
     audio.onerror = () => fail(new Error('audio playback failed'));
@@ -153,6 +169,7 @@ async function speak(text, mode, ready = prefetchSpeech(text, mode)) {
 
 /* ---------------- transcript ---------------- */
 
+// Returns the main bubble, so a caller can keep filling it in.
 function addTurn(who, text, mode, toolSpeech) {
   const el = document.createElement('div');
   el.className = `turn ${who}`;
@@ -168,6 +185,36 @@ function addTurn(who, text, mode, toolSpeech) {
   }
   $('transcript').appendChild(el);
   $('transcript').scrollTop = $('transcript').scrollHeight;
+  return el.querySelector('.bubble');
+}
+
+// The words of a recorded line, written out as they are spoken: a line that
+// is on screen before the first word is said looks written in advance, which
+// is the one thing a live-sounding demo must not do. A clip carries no
+// word-level timing, so each word gets a share of the clip by its length, plus
+// the pause a comma or full stop leaves in the speech (the clips are trimmed
+// tight, so the speech runs across the whole file). A word appears as it
+// begins to be said. Returns `show(p)`, p being how far through the clip we
+// are; the bubble is only created once the first word is due.
+function paceWords(text, getBubble) {
+  const words = [...text.matchAll(/\S+/g)];
+  const starts = [];
+  let total = 0;
+  words.forEach((m, i) => {
+    starts.push(total);
+    const last = i === words.length - 1;
+    total += m[0].length + (last ? 0 : /[.?!]$/.test(m[0]) ? 6 : /[,;:—–-]$/.test(m[0]) ? 3 : 0);
+  });
+
+  let shown = 0;
+  return (p) => {
+    let n = shown;
+    while (n < words.length && starts[n] / total <= p) n += 1;
+    if (n === shown || n === 0) return;
+    shown = n;
+    getBubble().textContent = text.slice(0, words[n - 1].index + words[n - 1][0].length);
+    $('transcript').scrollTop = $('transcript').scrollHeight;
+  };
 }
 
 /* ---------------- judge view ---------------- */
@@ -239,14 +286,18 @@ function renderJudge(state) {
 // fetched as soon as the text is back, so by the time the clip ends everything
 // is ready and the only wait left is the deliberate beat of a listener
 // answering. Reply text and voice land together: the bubble appears when the
-// audio starts, not before it.
+// audio starts, not before it. The user's own line is written out as the clip
+// is spoken (see paceWords) rather than dropped on screen whole.
 const RESPONSE_GAP_MS = 600;   // user stops → assistant starts, the beat of a listener taking it in
 let lastMode = 'normal';
 
 async function send(text, { clip = null } = {}) {
   if (busy || !text.trim()) return false;
   busy = true;
-  addTurn('user', text);
+  // Typed or spoken-live text is already complete; a recorded line is not.
+  let userBubble = clip ? null : addTurn('user', text);
+  const getUserBubble = () => (userBubble ??= addTurn('user', ''));
+  const reveal = clip ? paceWords(text, getUserBubble) : null;
   try {
     const turn = fetch('/api/turn', {
       method: 'POST',
@@ -261,12 +312,13 @@ async function send(text, { clip = null } = {}) {
     turn.catch(() => {});        // surfaced below; don't let a stopped replay leave it unhandled
 
     if (clip) {
-      // A clip that won't play is not fatal — the line is already on screen.
-      await playAudio(clip, 'listening').catch((err) => console.error('clip failed:', err));
-      if (replay.stop) {
+      // A clip that won't play is not fatal — the line just lands whole.
+      await playAudio(clip, 'listening', { onProgress: reveal }).catch((err) => console.error('clip failed:', err));
+      if (replay.stop) {         // cut off mid-line: leave only what was said
         setOrb('idle', '');
         return true;
       }
+      getUserBubble().textContent = text;   // complete the line (all of it, if the clip never played)
       setOrb('thinking', 'thinking…');
       await gap(RESPONSE_GAP_MS);
       if (replay.stop) {
